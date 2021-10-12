@@ -6,9 +6,13 @@ import gc
 import glob
 import openpyxl
 
-#parameter
+###parameter
+#データ格納のpath
 path = '../data'
+#excelシートのスキップする行数
 skiprows = 4
+
+###pathのエクセルのファイル名を全て取得してエクセルごとに、すべてのシートを一つに集約して保存
 
 #pathのエクセルのファイル名を全て取得
 file = glob.glob(path+'/*.xlsx')
@@ -28,7 +32,7 @@ for n in tqdm(file):
         target_sheet = k
         input_sheet_df = input_book.parse(target_sheet,
                                           skiprows = skiprows)
-        ### 書式の色の読み取り
+### 書式の色の読み取り
         wb = openpyxl.load_workbook(input_path)
         sheet = wb[input_sheet_name]
         #書式の色を読み取りに行くセルの最大行を取得
@@ -54,5 +58,5 @@ for n in tqdm(file):
         input_sheet_df['sheet_name'] = target_sheet
         #一つのDataFrameに集約
         output = pd.concat([output,input_sheet_df],ignore_index=True)
-    #エクセルごとに全シートを一つに集約したものを保存
+###エクセルごとに全シートを一つに集約したものを保存
     output.to_csv(path+'/output/'+save_filename+'.csv', encoding='cp932')
