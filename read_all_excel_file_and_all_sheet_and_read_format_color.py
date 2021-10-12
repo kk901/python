@@ -49,6 +49,8 @@ for n in tqdm(file):
                 mylist.append(False)
         # 色の情報のカラムを追加
         input_sheet_df['format_no_color'] =   mylist
+### 書式の色の読み取り
+
         #カラム名前の変更
         input_sheet_df.rename(columns={'Unnamed: 1': 'xxx1', 
                            'Unnamed: 2': 'xxx2',
