@@ -35,7 +35,7 @@ for n in tqdm(file):
                 mylist.append(True)
             else:
                 mylist.append(False)
-        tmp_df['format_no_color'] =   mylist
+        input_sheet_df['format_no_color'] =   mylist
         input_sheet_df.rename(columns={'Unnamed: 1': 'xxx1', 
                            'Unnamed: 2': 'xxx2',
                            'Unnamed: 4': 'xxx3'
