@@ -1,2 +1,2 @@
 # python
-useful code
+useful sample code
