@@ -23,3 +23,6 @@ def read_all_csv(input_path):
 
 input_path = 'data/'
 input_df = read_all_csv(input_path)
+
+
+input_df.to_csv(output/'+input.csv', encoding='utf_8_sig')
