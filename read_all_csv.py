@@ -6,7 +6,7 @@ from tqdm.notebook import tqdm
 def read_all_csv(input_path):
     start = time.time()
     filelist = glob.glob(input_path+'*.csv')
-    print(len(file))
+    print(len(filelist))
     output = pd.DataFrame(index=[])
     def readcsv(file):
         #file_name取得
