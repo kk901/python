@@ -22,8 +22,7 @@ match_cnt = 0
 diff_list = []
 nothing_list = []
 nothing_cnt = 0
-for k in filelist:
-    file = k
+for file in filelist:
     filename = file.split('\\')[-1]
     with open(file,'r') as f:
         str1 = f.readlines()
