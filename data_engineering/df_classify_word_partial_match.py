@@ -6,7 +6,8 @@ input_df = pd.read_csv('data/input.csv')
 
 def classify_target(name,column_name,target_wordlist_df,input_df):
     '''
-    対象ワードを元に、部分一致でフラグをつける
+    対象ワードリストを元に、部分一致したものをフラグをつける
+    また、何のワードで部分一致したかを分類項目としてカラム追加
     '''
     output=input_df
     output[name] =0
