@@ -1,0 +1,156 @@
+import pandas as pd
+import numpy as np
+
+flag_name ='対象フラグ'
+
+# parameter
+version = 'v1_'
+wordlist_path  = '../../worldlist.xlsx'
+wordlist_sheet = 'worllist'
+input_path = '../../input/'
+input_file = 'table1.xlsx'
+skiprows=0
+target_sheet = 'table1'
+target_column = 'column_name'
+table_column_name = 'sheet_name'
+col_type = 'type'
+date_name = 'DATE'
+
+#保存ファイル名
+output_path = '../02_Output/'
+output_filename = output_path+version+'result_datalist_'+target_sheet+'_.csv'
+output_analysis_path = '../02_Output/analysis/'
+
+
+# 関数
+def main(input_file,target_sheet,skiprows,
+         target_column,table_column_name,
+         col_type,date_name):
+    
+    # 1.データ読み込み
+    word_list,input_df = read_excel_data(wordlist_path,wordlist_sheet,hypothesis_path+input_file,target_sheet,skiprows)
+    # 1.5 初期カラム取得
+    int_columns = input_df.columns
+    # 2.データ処理(ワードがテーブル項目に部分一致するかの判定)
+    output = classify_target(flag_name,word_list,target_column,input_df)
+    # 3.アウトプット整形
+    result = make_outputformat(output,int_columns,flag_name,output_path,version,target_sheet)
+    # 4.結果の分析
+    table_summary_output,tb_output = make_output_analysis(result,flag_name,target_sheet,table_column_name,output_analysis_path,version)
+    # 5.日付を含むテーブル数の分析
+    count_table_contain_date(result,table_column_name,col_type,flag_name,date_name)
+
+def read_excel_data(wordlist_path,wordlist_sheet,input_path,target_sheet,skiprows):
+    '''
+    データ読み込み
+    -----parameter-----
+    wordlist_path:ワードリストのファイルパス
+    wordlist_sheet:ワードリストのシート名
+    input_path:参照データのファイルパス
+    target_sheet:参照データのシート名
+    skiprows:参照データのskipする行数
+    '''
+    wordlist_book = pd.ExcelFile(wordlist_path)
+    word_list = wordlist_book.parse(wordlist_sheet)
+    input_book = pd.ExcelFile(input_path)
+    input_df = input_book.parse(target_sheet,skiprows=skiprows)
+    return word_list,input_df
+def classify_target(flag_name,target_wordlist_df,target_column,input_df):
+    '''
+    対象ワードを元に、部分一致でフラグをつける
+    -----parameter-----
+    flag_name:フラグ名
+    target_wordlist_df:対象のワードリスト
+    target_column:対象ワードをマッチさせるカラム名
+    input_df:対象データ
+    '''
+    output=input_df
+    
+    output[flag_name] =0
+    output[flag_name+'_table'] =0
+    output['分類_'+flag_name] = '対象外'
+    output['分類_'+flag_name+'_table'] = '対象外'
+    output[target_column] = output[target_column].astype(str)
+    target_wordlist_df['ワード'] = target_wordlist_df['ワード'].astype(str)
+    
+    for n in target_wordlist_df['ワード']:
+
+        print(n)
+        # ワードリストからの部分一致
+        output[n] =0
+        # 部分一致したら1、しなかったら0
+        output[n].loc[output[target_column].str.contains(n) == True] = 1
+        # 部分一致したらキーワードを代入
+        output.loc[output[target_column].str.contains(n) == True,'分類_'+flag_name] = n
+        # 全体でフラグを集約
+        output[flag_name] = output[flag_name]+ output[n]
+#         print(output[target_column].str.contains(n).value_counts())
+
+        # テーブルカラム名からの部分一致
+        output[n+'_table'] = 0
+        # 部分一致したら1、しなかったら0
+        output[n+'_table'] = output[target_column].apply(lambda x: 1 if x in n else 0)
+        # 部分一致したらキーワードを代入
+        output[flag_name+'_table'] = output[flag_name+'_table']+ output[n+'_table']
+        # 全体でフラグを集約
+        output.loc[output[n+'_table'] > 0,'分類_'+flag_name+'_table'] = output[target_column]
+        
+    # フラグ2以上は1に変更
+    output[flag_name].loc[output[flag_name]>=1] = 1
+    output[flag_name+'_table'].loc[output[flag_name+'_table']>=1] = 1
+    return output
+def make_outputformat(output_df,int_columns,flag_name,output_path,version,target_sheet):
+    '''
+    出力された結果を体裁を整えて保存する
+    -----parameter-----
+    output_df:保存したいアウトプットの結果
+    int_columns:必要なカラムリスト；初期カラム
+    flag_name:処理した結果の新規カラムの名前
+    output_filename:ファイル保存名
+    '''
+    result = output_df[int_columns]
+    result[flag_name] = output_df[flag_name]
+    result[flag_name+'_table'] = output_df[flag_name+'_table']
+    result['分類_'+flag_name] = output_df['分類_'+flag_name]
+    result['分類_'+flag_name+'_table'] = output_df['分類_'+flag_name+'_table']
+    result.to_csv(output_path+version+'result_datalist_'+target_sheet+'_.csv',encoding='utf_8_sig')
+    return result
+def make_output_analysis(output_df,flag_name,target_sheet,table_column_name,output_analysis_path,version):
+    '''
+    出力したサマリの結果を出力
+    ①ワードごとにワードマッチ件数をカウント（一つのテーブルに対して複数マッチした場合はユニークで計算）
+    ②テーブルごとにワードマッチ件数をカウント（一つのテーブルに対して複数マッチした場合はユニークで計算）
+    '''
+    # 結果のサマリ
+    
+    # ワードごとにワードマッチ件数をカウント（一つのテーブルに対して複数マッチした場合はユニークで計算）
+    # 分類_対象フラグ,対象フラグ
+    summary = output_df[output_df[flag_name]==1][[table_column_name,'分類_'+flag_name,flag_name]]
+    summary = summary.drop_duplicates()
+    table_summary_output = summary.groupby('分類_'+flag_name).sum().reset_index()[['分類_'+flag_name,flag_name]].sort_values(flag_name, ascending=False)
+    # 保存
+    table_summary_output.to_csv(output_analysis_path+version+'word_match_cnt'+'_'+target_sheet+'.csv',encoding='utf_8_sig')
+    # テーブルごとにワードマッチ件数をカウント（一つのテーブルに対して複数マッチした場合はユニークで計算）
+    # table_name,対象フラグ
+    tb_output = summary.groupby(table_column_name).count().reset_index()[[table_column_name,flag_name]].sort_values(flag_name, ascending=False)
+    # 保存
+    tb_output.to_csv(output_analysis_path+version+'tb_word_match_cnt'+'_'+target_sheet+'.csv',encoding='utf_8_sig')
+    return table_summary_output,tb_output
+def count_table_contain_date(output_df,table_column_name,col_type,flag_name,date_name):
+    '''
+    テーブルに日付がどれだけ含まれているかの確認
+    '''
+    tb_date_df = output_df[[table_column_name,col_type,flag_name,'分類_'+flag_name]]
+    print('全体テーブル数')
+    print(len(tb_date_df[table_column_name].unique()))
+    print('日付が含まれているテーブル数')
+    print(len(tb_date_df[tb_date_df[col_type]==date_name][table_column_name].unique()))
+    tb_date_df = tb_date_df[(tb_date_df[col_type]==date_name)&(tb_date_df[flag_name]==1)]
+    print('ワードマッチした日付が含まれているテーブル数')
+    print(len(tb_date_df[table_column_name].unique()))
+    
+# 関数実行
+if __name__ == "__main__":
+    main(input_file,target_sheet,skiprows,
+         target_column,table_column_name,
+         col_type,date_name)
