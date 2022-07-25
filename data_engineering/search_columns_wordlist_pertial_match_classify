@@ -5,10 +5,13 @@ flag_name ='対象フラグ'
 
 # parameter
 version = 'v1_'
+# path
 wordlist_path  = '../../worldlist.xlsx'
 wordlist_sheet = 'worllist'
 input_path = '../../input/'
 input_file = 'table1.xlsx'
+
+# read_excel_info
 skiprows=0
 target_sheet = 'table1'
 target_column = 'column_name'
@@ -16,7 +19,7 @@ table_column_name = 'sheet_name'
 col_type = 'type'
 date_name = 'DATE'
 
-#保存ファイル名
+# path/output_filename
 output_path = '../02_Output/'
 output_filename = output_path+version+'result_datalist_'+target_sheet+'_.csv'
 output_analysis_path = '../02_Output/analysis/'
