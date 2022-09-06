@@ -7,10 +7,12 @@ import seaborn as sns #Visulization
 %matplotlib inline
 import shap
 
+
 # print the JS visualization code to the notebook
 shap.initjs()
 
 from sklearn.metrics import mean_absolute_error
+from sklearn import metrics
 
 # Parallel
 import multiprocessing
@@ -95,12 +97,12 @@ test_df = input_df[(input_df['ds']<= test_term_end) & (input_df['ds']>= test_ter
 train_train =  input_df[input_df[dt]< val_term_point ]
 train_val =  input_df[input_df[dt]>= val_term_point ]
 
-col = 'target'
+target_col = 'target'
 
-train_y =train_train[col]
+train_y =train_train[target_col]
 train_x = train_train[fit_col]
 
-val_y = train_val[col]
+val_y = train_val[target_col]
 val_x = train_val[fit_col]
 
 trains = lgb.Dataset(train_x, train_y)
@@ -112,6 +114,17 @@ params = {
     "learning_rate": "0.1"
 }
 
+# params = {
+#     # 二値分類問題
+#     'objective': 'binary',
+#     # AUC の最大化を目指す
+#     'metric': 'auc',
+#     # Fatal の場合出力
+#     'verbosity': -1,
+# }
+
+
+
 # 学習開始
 start = time.time()
 model = lgb.train(
@@ -122,25 +135,35 @@ model = lgb.train(
     early_stopping_rounds=100)
 print('実行にかかった時間は{}秒でした'.format(time.time()-start))
 
-correct_label = test_df[col] 
+correct_label = test_df[target_col] 
 test_df_features = test_df[fit_col]
 
-predict = model.predict(test_df_features)
+y_pred = model.predict(test_df_features)
 output_df = test_df
-output_df['predict'] = predict
+output_df['y_pred'] = y_pred
 output_df.to_csv(output+f'output_{version}.csv', encoding='cp932')
 
 # mae 計算（numpy で計算）
-mae = np.mean(np.abs(output_df['amount'] - output_df['predict']))
+mae = np.mean(np.abs(output_df[target_col] - output_df['y_pred']))
 print(mae)
 dict = {'rmse':[mae]}
 pd.DataFrame(dict).to_csv(output+f'mae_all_{version}.csv')
 # rmse 計算（numpy で計算）
-rmse = np.sqrt(np.mean( (output_df['amount'] - output_df['predict']) ** 2))
+rmse = np.sqrt(np.mean( (output_df[target_col] - output_df['y_pred']) ** 2))
 print(rmse)
 dict = {'rmse':[rmse]}
 pd.DataFrame(dict).to_csv(output+f'rmse_all_{version}.csv')
 
+# AUC (Area Under the Curve) を計算する
+fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred)
+auc = metrics.auc(fpr, tpr)
+print(auc)
+plt.plot(fpr, tpr, label='ROC curve (area = %.2f)'%auc)
+plt.legend()
+plt.title('ROC curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.grid(True)
 
 # feature importanceを表示
 
