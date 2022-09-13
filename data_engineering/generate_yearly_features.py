@@ -2,6 +2,8 @@ def null_creansing_replace(df,target,recover):
     df.loc[df[target].isnull(),target] = df.loc[df[target].isnull(),recover]
     return df
 def genrerate_start_end_date(df,tgt_group):
+    #ダミーとしてNAを十分に大きいデータをいれた
+    df['終了日付_adj'] = df['終了日付_adj'].fillna('2222-2-22')
     df['開始日付'] = pd.to_datetime(df['開始日付'])
     df['終了日付'] = pd.to_datetime(df['終了日付'])
     start = df.groupby(tgt_group)['開始日付'].min().reset_index()
