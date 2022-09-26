@@ -108,21 +108,30 @@ val_x = train_val[fit_col]
 trains = lgb.Dataset(train_x, train_y)
 valids = lgb.Dataset(val_x, val_y)
 
-params = {
-    "objective": "regression",
-    "metrics": "rmse",
-    "learning_rate": "0.1"
-}
-
 # params = {
-#     # 二値分類問題
-#     'objective': 'binary',
-#     # AUC の最大化を目指す
-#     'metric': 'auc',
-#     # Fatal の場合出力
-#     'verbosity': -1,
+#     "objective": "regression",
+#     "metrics": "rmse",
+#     "learning_rate": "0.1"
 # }
 
+params = {
+    # 二値分類問題
+    'objective': 'binary',
+    # AUC の最大化を目指す
+    'metric': 'auc',
+    # Fatal の場合出力
+    'verbosity': -1, # <0:Fatal, =0:Error(Warning), =1:into,>1:Debug
+    'learning_rate': '0.05',
+    'seed':77,
+    'num_leaves':31,# 木の複雑度をコントロールするメインパラメータ,分岐の終着点の数を決める 7,15,31 大きいほどOverfit 2^(mad_depth)*0.7
+    'max_depth':9,# 木の最大の深さ 5,7,9 大きいほどOverfit
+    'min_date_in_leaf':20, # 歯に行き着くデータの最小数 20,30,50　小さいほどOverfit
+    'bagging_fraction':0.9,# baggingで選択されるサンプルの割合(bagging_freqとセットで設定する) 0.8,0.9 大きいほどOverfit?
+    'bagging_freq':1,# 何回に一回baggingするか(bagging_fractinoとセットで設定する) 1,3 小さいほどOverfit?
+    'feature_fraction':1.0,# 1未満にすることで特徴量を削除することになる 0.9,1.0 大きいほどOverfit?
+    # 'lambda_l1':5,# L1正規化 0,2,5 小さいほどOverfit　正直どのくらいがいいかわからないので、下手にいじらないことも
+    # 'lamdba_l2':5,# L2正規化 0,2,5 小さいほどOverfit　正直どのくらいがいいかわからないので、下手にいじらないことも
+}
 
 
 # 学習開始
